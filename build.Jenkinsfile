@@ -50,14 +50,18 @@ pipeline {
         always {
             script {
                 // Remove dangling images
-                bat 'FOR /F "tokens=*" %i IN (\'docker images -f "dangling=true" -q\') DO IF NOT "%i"=="" docker rmi %i'
+                bat '''
+                    FOR /F "tokens=*" %i IN ('docker images -f "dangling=true" -q') DO (
+                        docker rmi %i
+                    )
+                '''
 
                 // Remove specific repository images
-                bat """
+                bat '''
                     FOR /F "tokens=*" %i IN ('docker images ${env.DOCKER_REPO} -q') DO (
-                        IF NOT "%i"=="" docker rmi %i
+                        docker rmi %i
                     )
-                """
+                '''
             }
         }
     }
