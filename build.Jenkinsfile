@@ -47,21 +47,17 @@ pipeline {
         }
     }
     post {
+        // Clean after build
         always {
+            cleanWs(cleanWhenNotBuilt: false,
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    notFailBuild: true)
+            // Clean up Docker images
             script {
-                // Remove dangling images
-                bat '''
-                    FOR /F "tokens=*" %i IN ('docker images -f "dangling=true" -q') DO (
-                        docker rmi %i
-                    )
-                '''
-
-                // Remove specific repository images
-                bat '''
-                    FOR /F "tokens=*" %i IN ('docker images ${env.DOCKER_REPO} -q') DO (
-                        docker rmi %i
-                    )
-                '''
+                bat """
+                    docker image prune -f
+                """
             }
         }
     }
