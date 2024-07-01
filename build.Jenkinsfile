@@ -46,4 +46,12 @@ pipeline {
             }
         }
     }
+    post {
+        always {
+            bat """
+                docker rmi $(docker images -f "dangling=true" -q) || true
+                for /f "tokens=3 delims= " %i in ('docker images ^| findstr "ofriz/jenkinsproject"') do docker rmi %i || true
+            """
+        }
+    }
 }
