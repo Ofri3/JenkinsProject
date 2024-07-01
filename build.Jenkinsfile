@@ -48,10 +48,10 @@ pipeline {
     }
     post {
         always {
-            bat """
+            script {
                 docker rmi $(docker images -f "dangling=true" -q) || true
-                for /f "tokens=3 delims= " %i in ('docker images ^| findstr "ofriz/jenkinsproject"') do docker rmi %i || true
-            """
+                docker rmi $(docker images | findstr "ofriz/jenkinsproject" | awk '{print $3}') || true
+            }
         }
     }
 }
