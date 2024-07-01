@@ -48,10 +48,17 @@ pipeline {
     }
     post {
         always {
-            bat '''
-                docker rmi $(docker images -f "dangling=true" -q) || true
-                for /f "tokens=3 delims= " %i in ('docker images ^| findstr "ofriz/jenkinsproject"') do docker rmi %i || true
-            '''
+            script {
+                // Remove dangling images
+                bat 'FOR /F "tokens=*" %i IN (\'docker images -f "dangling=true" -q\') DO IF NOT "%i"=="" docker rmi %i'
+
+                // Remove specific repository images
+                bat """
+                    FOR /F "tokens=*" %i IN ('docker images ${env.DOCKER_REPO} -q') DO (
+                        IF NOT "%i"=="" docker rmi %i
+                    )
+                """
+            }
         }
     }
 }
