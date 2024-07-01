@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'ofriz/jenkinsproject:jenkins-agent'
-            args  '--user root -v //var/run/docker.sock://var/run/docker.sock'
-        }
-    }
+    agent any
     options {
         buildDiscarder(logRotator(daysToKeepStr: '30'))
         disableConcurrentBuilds()

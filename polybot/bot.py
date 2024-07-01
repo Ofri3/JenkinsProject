@@ -4,7 +4,7 @@ import telebot
 from PIL import Image
 from loguru import logger
 from telebot.types import InputFile
-from img_proc import Img
+from polybot.img_proc import Img
 
 
 class Bot:

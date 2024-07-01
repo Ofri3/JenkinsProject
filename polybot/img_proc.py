@@ -214,7 +214,7 @@ class Img:
         self.data = result
 
     # Instantiate the Img class with the path to your image file
-my_img = Img(r'./test/beatles.jpeg')
+my_img = Img(r'beatles.jpeg')
 
     # Perform operations on the image
 my_img.blur()
