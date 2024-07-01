@@ -13,7 +13,6 @@ pipeline {
 
     environment {
         DOCKER_REPO = 'ofriz/jenkinsproject'
-        IMG_NAME = "jenkinsproject:${BUILD_NUMBER}"
     }
     stages {
         stage('Checkout') {
@@ -53,10 +52,7 @@ pipeline {
     }
     post {
         always {
-            bat """
-                docker rmi $(docker images -f "dangling=true" -q) || true
-                docker rmi $(docker images | findstr "<your-dockerhub-username>/your-app-repo" | awk '{print $3}') || true
-            """
+            cleanWs()
         }
     }
 }
