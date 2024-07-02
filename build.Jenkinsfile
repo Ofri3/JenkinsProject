@@ -56,8 +56,8 @@ pipeline {
                         // Scan the image
                         bat """
                             snyk auth $SNYK_TOKEN
-                            snyk container test %DOCKER_REPO%:${latestTag} --severity-threshold=high
-                            snyk container test %DOCKER_REPO%:${latestTag} --file=Dockerfile
+                            snyk container test %DOCKER_REPO%:latest --severity-threshold=high
+                            snyk container test %DOCKER_REPO%:latest --file=Dockerfile
                         """
                     }
                 }
