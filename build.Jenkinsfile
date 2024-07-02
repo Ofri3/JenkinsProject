@@ -54,7 +54,6 @@ pipeline {
                     severity: 'high',
                     snykInstallation: 'snyk@latest',
                     snykTokenId: 'SNYK_API_TOKEN',
-                    targetFile: 'snyk.json'
                 )
             }
         }
