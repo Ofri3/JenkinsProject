@@ -1,13 +1,17 @@
 pipeline {
     agent any
     options {
+        // Keeps builds for the last 30 days.
         buildDiscarder(logRotator(daysToKeepStr: '30'))
+        // Prevents concurrent builds of the same pipeline.
         disableConcurrentBuilds()
+        // Adds timestamps to the log output.
         timestamps()
     }
 
     environment {
         DOCKER_REPO = 'ofriz/jenkinsproject'
+        SNYK_API_TOKEN = credentials('SNYK_API_TOKEN')
     }
     stages {
         stage('Checkout') {
@@ -32,7 +36,7 @@ pipeline {
                         def gitTag = "${gitCommit}"
                         def latestTag = "latest"
 
-                        // Build and tag Docker images
+                        // Build, tag, and push images
                         bat """
                             cd polybot
                             docker login -u ${USER} -p ${PASS}
@@ -45,15 +49,29 @@ pipeline {
                 }
             }
         }
+        stage('Security vulnerability scanning') {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'SNYK_API_TOKEN', variable: 'SNYK_TOKEN')]) {
+                        // Scan the image
+                        bat """
+                            snyk auth $SNYK_TOKEN
+                            snyk container test %DOCKER_REPO%:${latestTag} --severity-threshold=high
+                            snyk container test %DOCKER_REPO%:${latestTag} --file=Dockerfile
+                        """
+                    }
+                }
+            }
+        }
     }
     post {
-        // Clean after build
+            // Clean up workspace after build
         always {
             cleanWs(cleanWhenNotBuilt: false,
                     deleteDirs: true,
                     disableDeferredWipeout: true,
                     notFailBuild: true)
-            // Clean up Docker images
+            // Clean up unused dangling images
             script {
                 bat """
                     docker image prune -f
