@@ -54,7 +54,7 @@ pipeline {
                     severity: 'high',
                     snykInstallation: 'snyk@latest',
                     snykTokenId: 'SNYK_API_TOKEN',
-                    targetFile: 'Dockerfile'
+                    targetFile: 'polybot/Dockerfile'
                 )
             }
         }
