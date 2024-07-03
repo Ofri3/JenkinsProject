@@ -64,16 +64,20 @@ pipeline {
         }
         stage('Install Python Requirements') {
             steps {
-                bat """
-                    pip3 install pytest unittest2
-                """
+                script {
+                    bat """
+                        pip3 install pytest unittest2
+                    """
+                }
             }
         }
         stage('Unittest') {
             steps {
-                bat """
-                    python3 -m pytest --junitxml results.xml test/*.py
-                """
+                script {
+                    bat """
+                        python3 -m pytest --junitxml results.xml test/*.py
+                    """
+                }
             }
         }
     }
