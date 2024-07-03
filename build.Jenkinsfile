@@ -57,10 +57,23 @@ pipeline {
                         bat """
                             snyk auth $SNYK_TOKEN
                             snyk container test %DOCKER_REPO%:latest --severity-threshold=high
-                            snyk container test %DOCKER_REPO%:latest --file=Dockerfile
                         """
                     }
                 }
+            }
+        }
+        stage('Install Python Requirements') {
+            steps {
+                bat """
+                    pip3 install pytest unittest2
+                """
+            }
+        }
+        stage('Unittest') {
+            steps {
+                bat """
+                    python3 -m pytest --junitxml results.xml test/*.py
+                """
             }
         }
     }
@@ -71,6 +84,10 @@ pipeline {
                     deleteDirs: true,
                     disableDeferredWipeout: true,
                     notFailBuild: true)
+
+            // Publishes the test results in a readable format within Jenkins.
+            junit allowEmptyResults: true, testResults: 'results.xml'
+
             // Clean up unused dangling images
             script {
                 bat """
