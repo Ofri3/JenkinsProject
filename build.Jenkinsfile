@@ -65,7 +65,7 @@ pipeline {
         stage('Install Python Requirements') {
             steps {
                 script {
-                    bat 'pip3 install pytest unittest2'
+                    bat 'pip install pytest unittest2'
                 }
             }
         }
@@ -73,7 +73,7 @@ pipeline {
         stage('Unittest') {
             steps {
                 script {
-                    bat 'python3 -m pytest --junitxml results.xml polybot/test/*.py'
+                    bat 'python -m pytest --junitxml results.xml polybot/test/*.py'
                 }
             }
         }
