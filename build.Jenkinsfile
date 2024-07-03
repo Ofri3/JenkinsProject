@@ -11,6 +11,7 @@ pipeline {
 
     environment {
         DOCKER_REPO = 'ofriz/jenkinsproject'
+        SNYK_API_TOKEN = credentials('SNYK_API_TOKEN')
     }
     stages {
         stage('Checkout') {
@@ -50,12 +51,16 @@ pipeline {
         }
         stage('Security vulnerability scanning') {
             steps {
-                snykSecurity(
-                    severity: 'high',
-                    snykInstallation: 'snyk@latest',
-                    snykTokenId: 'SNYK_API_TOKEN',
-                    targetFile: 'package.json'
-                )
+                script {
+                    withCredentials([string(credentialsId: 'SNYK_API_TOKEN', variable: 'SNYK_TOKEN')]) {
+                        // Scan the image
+                        bat """
+                            snyk auth $SNYK_TOKEN
+                            snyk container test %DOCKER_REPO%:latest --severity-threshold=high
+                            snyk container test %DOCKER_REPO%:latest --file=Dockerfile
+                        """
+                    }
+                }
             }
         }
     }
