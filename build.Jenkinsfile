@@ -73,7 +73,7 @@ pipeline {
         stage('Unittest') {
             steps {
                 script {
-                    bat 'python3 -m pytest --junitxml results.xml test/*.py'
+                    bat 'python3 -m pytest --junitxml results.xml polybot/test/*.py'
                 }
             }
         }
