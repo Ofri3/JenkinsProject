@@ -79,15 +79,15 @@ pipeline {
         }
     }
     post {
-            // Clean up workspace after build
         always {
+            // Publishes the test results in a readable format within Jenkins.
+            junit allowEmptyResults: true, testResults: 'results.xml'
+
+            // Clean up workspace after build
             cleanWs(cleanWhenNotBuilt: false,
                     deleteDirs: true,
                     disableDeferredWipeout: true,
                     notFailBuild: true)
-
-            // Publishes the test results in a readable format within Jenkins.
-            junit allowEmptyResults: true, testResults: 'results.xml'
 
             // Clean up unused dangling images
             script {
