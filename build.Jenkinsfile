@@ -65,24 +65,49 @@ pipeline {
         stage('Install Python Requirements') {
             steps {
                 script {
-                    bat 'pip install pytest unittest2'
+                    bat 'pip install pytest unittest2 pylint'
                 }
             }
         }
 
-        stage('Unittest') {
-            steps {
-                script {
-                    bat 'python -m pytest --junitxml results.xml polybot/test'
+        stage('Static code linting and Unittesting') {
+            parallel {
+                stage('Static code linting') {
+                    steps {
+                        script {
+                            bat 'python -m pylint -f parseable --reports=no polybot/*.py > pylint.log'
+                        }
+                    }
+                    post {
+                        always {
+                            script {
+                                bat 'type pylint.log'
+                            }
+                            recordIssues(
+                                enabledForFailure: true,
+                                aggregatingResults: true,
+                                tools: [pyLint(name: 'Pylint', pattern: '**/pylint.log')]
+                            )
+                        }
+                    }
+                }
+                stage('Unittest') {
+                    steps {
+                        script {
+                            bat 'python -m pytest --junitxml results.xml polybot/test'
+                        }
+                    }
+                    post {
+                        always {
+                            junit allowEmptyResults: true, testResults: 'results.xml'
+                        }
+                    }
                 }
             }
         }
     }
     post {
         always {
-            // Publishes the test results in a readable format within Jenkins.
-            junit allowEmptyResults: true, testResults: 'results.xml'
-
             // Clean up workspace after build
             cleanWs(cleanWhenNotBuilt: false,
                     deleteDirs: true,
