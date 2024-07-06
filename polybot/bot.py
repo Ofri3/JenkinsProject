@@ -171,7 +171,7 @@ class ImageProcessingBot(Bot):
         half_width = width // 1
         processed_img = Image.new('RGB', (width * 2, height))
         processed_img.paste(original_img, (0, 0))
-        processed_img.paste(original_img.transpose(Image.FLIP_LEFT_RIGHT), (half_width, 0))
+        processed_img.paste(original_img.transpose(Image.Transpose.FLIP_LEFT_RIGHT), (half_width, 0))
         processed_img_path = f"{img_path.split('.')[0]}_concat.jpg"
         processed_img.save(processed_img_path)
 

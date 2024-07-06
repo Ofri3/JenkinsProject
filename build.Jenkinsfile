@@ -101,7 +101,7 @@ pipeline {
             recordIssues(
                 enabledForFailure: true,
                 aggregatingResults: true,
-                tools: [
+                tool: [
                     // Configure specific tools and their settings here
                     pyLint(pattern: 'pylint.log', severityWarning: 'HIGH')
                 ]
