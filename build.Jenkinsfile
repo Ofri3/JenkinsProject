@@ -62,22 +62,28 @@ pipeline {
         }
         stage('Install Python Requirements') {
             steps {
+                script {
                 bat """
                 pip install --upgrade pip
                 pip install pytest unittest2 pylint flask telebot Pillow loguru matplotlib
                 """
+                }
             }
         }
         stage('Static code linting and Unittesting') {
             parallel {
                 stage('Static code linting') {
                     steps {
-                        bat 'python -m pylint -f parseable --reports=no polybot/*.py > pylint.log'
+                        script {
+                            bat 'python -m pylint -f parseable --reports=no polybot/*.py > pylint.log'
+                        }
                     }
                 }
                 stage('Unittest') {
                     steps {
-                        bat 'python -m pytest --junitxml results.xml polybot/test'
+                        script {
+                            bat 'python -m pytest --junitxml results.xml polybot/test'
+                        }
                     }
                 }
             }
@@ -85,22 +91,27 @@ pipeline {
     }
     post {
         always {
-            // Cat the pylint.log results
+            // Type the pylint.log results
             bat 'type pylint.log'
+
             // Processes the test results using the JUnit plugin
             junit 'results.xml'
+
             // Processes the pylint report using the Warnings Plugin
             recordIssues(
-            enabledForFailure: true,
-            aggregatingResults: true,
-            tools: [pyLint(pattern: 'pylint.log')]
+                enabledForFailure: true,
+                aggregatingResults: true
+                tools: [
+                    // Configure specific tools and their settings here
+                    pyLint(pattern: 'pylint.log', severityWarning: 'HIGH')
+                ]
             )
+
             // Clean up workspace after build
-            cleanWs(
-            cleanWhenNotBuilt: false,
-            deleteDirs: true,
-            notFailBuild: true
-            )
+            cleanWs(cleanWhenNotBuilt: false,
+                    deleteDirs: true,
+                    notFailBuild: true)
+
             // Clean up unused dangling images
             script {
                 bat """
