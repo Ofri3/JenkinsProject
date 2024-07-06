@@ -100,10 +100,7 @@ pipeline {
             junit 'results.xml'
 
             // Processes the pylint report using the Warnings Plugin
-            recordIssues (
-                aggregatingResults: true,
-                tools: [pyLint(pattern: 'pylint.log', severityWarning: 'HIGH')]
-            )
+            recordIssues tools: [pyLint(pattern: 'pylint.log')]
 
             // Clean up workspace after build
             cleanWs(cleanWhenNotBuilt: false,
