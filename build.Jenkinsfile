@@ -95,11 +95,10 @@ pipeline {
     post {
         always {
             junit 'results.xml'
-            recordIssues enabledForFailure: true, tools: [pylint(pattern: 'pylint.log')]
+            recordIssues tools: [pyLint(pattern: 'pylint.log')]
             // Clean up workspace after build
             cleanWs(cleanWhenNotBuilt: false,
                     deleteDirs: true,
-                    disableDeferredWipeout: true,
                     notFailBuild: true)
 
             // Clean up unused dangling images
