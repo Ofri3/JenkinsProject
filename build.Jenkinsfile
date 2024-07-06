@@ -100,7 +100,7 @@ pipeline {
             // Processes the pylint report using the Warnings Plugin
             recordIssues(
                 enabledForFailure: true,
-                aggregatingResults: true
+                aggregatingResults: true,
                 tools: [
                     // Configure specific tools and their settings here
                     pyLint(pattern: 'pylint.log', severityWarning: 'HIGH')
