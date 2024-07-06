@@ -75,7 +75,9 @@ pipeline {
                 stage('Static code linting') {
                     steps {
                         script {
-                            bat 'python -m pylint -f parseable --reports=no polybot/*.py > pylint.log'
+                            bat """
+                            python -m pylint -f parseable --reports=no polybot/*.py > pylint.log
+                            """
                         }
                     }
                 }
