@@ -102,7 +102,7 @@ pipeline {
             // Processes the pylint report using the Warnings Plugin
             recordIssues (
                 enabledForFailure: true, aggregatingResults: true,
-                tools: [pyLint(pattern: 'pylint.log'), severityWarning: 'HIGH']
+                tools: [pyLint(pattern: 'pylint.log', severityWarning: 'HIGH')]
             )
 
             // Clean up workspace after build
