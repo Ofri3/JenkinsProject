@@ -77,6 +77,7 @@ pipeline {
                         script {
                             bat """
                             python -m pylint -f parseable --reports=no polybot/*.py > pylint.log
+                            type pylint.log
                             """
                         }
                     }
@@ -93,9 +94,6 @@ pipeline {
     }
     post {
         always {
-            // Type the pylint.log results
-            bat 'type pylint.log'
-
             // Processes the test results using the JUnit plugin
             junit 'results.xml'
 
