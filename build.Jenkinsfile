@@ -98,7 +98,8 @@ pipeline {
             // Processes the test results using the JUnit plugin
             junit 'results.xml'
             // Processes the pylint report using the Warnings Plugin
-            recordIssues enabledForFailure: true, aggregatingResults: true, tool: pyLint(pattern: 'pylint.log')
+            recordIssues enabledForFailure: true, aggregatingResults: true,
+            tools: [pyLint(pattern: 'pylint.log'), severityWarning: 'HIGH']
 
             // Clean up workspace after build
             cleanWs(cleanWhenNotBuilt: false,
