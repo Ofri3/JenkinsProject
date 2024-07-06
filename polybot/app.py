@@ -1,8 +1,7 @@
-import flask
-from flask import request
+from flask import Flask, request
 from bot import QuoteBot, ImageProcessingBot
 
-app = flask.Flask(__name__)
+app = Flask(__name__)
 
 TELEGRAM_TOKEN = ''
 TELEGRAM_APP_URL = 'https://t.me/@Smileythebot'
@@ -10,11 +9,17 @@ TELEGRAM_APP_URL = 'https://t.me/@Smileythebot'
 
 @app.route('/', methods=['GET'])
 def index():
+    """
+    This is a function docstring.
+    """
     return 'Ok'
 
 
 @app.route(f'/{TELEGRAM_TOKEN}/', methods=['POST'])
 def webhook():
+    """
+    This is a function docstring.
+    """
     req = request.get_json()
     print(req)
     if 'message' in req:

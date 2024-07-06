@@ -41,8 +41,6 @@ pipeline {
                             cd polybot
                             docker login -u ${USER} -p ${PASS}
                             docker build -t %DOCKER_REPO%:${semverTag} -t %DOCKER_REPO%:${gitTag} -t %DOCKER_REPO%:${latestTag} .
-                            docker push %DOCKER_REPO%:${semverTag}
-                            docker push %DOCKER_REPO%:${gitTag}
                             docker push %DOCKER_REPO%:${latestTag}
                         """
                     }
@@ -65,29 +63,22 @@ pipeline {
         stage('Install Python Requirements') {
             steps {
                 script {
-                    bat 'pip install pytest unittest2 pylint'
+                    bat """
+                    pip install --upgrade pip
+                    pip install pytest unittest2 pylint flask telebot Pillow loguru matplotlib
+                    """
                 }
             }
         }
-
         stage('Static code linting and Unittesting') {
             parallel {
                 stage('Static code linting') {
                     steps {
                         script {
-                            bat 'python -m pylint -f parseable --reports=no polybot/*.py > pylint.log'
-                        }
-                    }
-                    post {
-                        always {
-                            script {
-                                bat 'type pylint.log'
-                            }
-                            recordIssues(
-                                enabledForFailure: true,
-                                aggregatingResults: true,
-                                tools: [pyLint(name: 'Pylint', pattern: '**/pylint.log')]
-                            )
+                            bat """
+                            python -m pylint -f parseable --reports=no polybot/*.py > pylint.log
+                            type pylint.log
+                            """
                         }
                     }
                 }
@@ -97,17 +88,14 @@ pipeline {
                             bat 'python -m pytest --junitxml results.xml polybot/test'
                         }
                     }
-                    post {
-                        always {
-                            junit allowEmptyResults: true, testResults: 'results.xml'
-                        }
-                    }
                 }
             }
         }
     }
     post {
         always {
+            junit 'results.xml'
+            recordIssues enabledForFailure: true, tools: [pylint(pattern: 'pylint.log')]
             // Clean up workspace after build
             cleanWs(cleanWhenNotBuilt: false,
                     deleteDirs: true,
