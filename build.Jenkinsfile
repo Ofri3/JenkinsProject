@@ -70,7 +70,7 @@ pipeline {
                 }
             }
         }
-        stage('Static code linting and Unittesting') {
+        stage('Static code linting and Unittest') {
             parallel {
                 stage('Static code linting') {
                     steps {
@@ -89,6 +89,11 @@ pipeline {
                         }
                     }
                 }
+            }
+        }
+        stage('Deployment to EC2') {
+            steps {
+                // Add deployment steps here
             }
         }
     }
