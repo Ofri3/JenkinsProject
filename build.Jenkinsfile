@@ -94,6 +94,10 @@ pipeline {
         stage('Deployment to EC2') {
             steps {
                 // Add deployment steps here
+                bat """
+                    echo Example: Push Docker image to a registry
+                    echo Example: Deploy to EC2
+                """
             }
         }
     }
