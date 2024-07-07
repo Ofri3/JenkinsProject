@@ -10,8 +10,13 @@ pipeline {
     }
 
     environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         DOCKER_REPO = 'ofriz/jenkinsproject'
         SNYK_API_TOKEN = credentials('SNYK_API_TOKEN')
+        NEXUS_PROTOCOL = "http"
+        NEXUS_URL = "172.30.134.43:8085"
+        NEXUS_REPO = "dockernexus"
+        NEXUS_CREDENTIALS_ID = "nexus"
     }
     stages {
         stage('Checkout') {
@@ -22,7 +27,7 @@ pipeline {
         }
         stage('Build, tag, and push docker image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'NEXUS_CREDENTIALS_ID', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     script {
                         // Extract Git commit hash
                         bat(script: 'git rev-parse --short HEAD > gitCommit.txt')
@@ -39,9 +44,9 @@ pipeline {
                         // Build, tag, and push images
                         bat """
                             cd polybot
-                            docker login -u ${USER} -p ${PASS}
-                            docker build -t %DOCKER_REPO%:${semverTag} -t %DOCKER_REPO%:${gitTag} -t %DOCKER_REPO%:${latestTag} .
-                            docker push %DOCKER_REPO%:${latestTag}
+                            docker login -u ${USER} -p ${PASS} ${NEXUS_PROTOCOL}://${NEXUS_URL}/repository/${NEXUS_REPO}
+                            docker build -t %NEXUS_REPO%:${semverTag} -t %NEXUS_REPO%:${gitTag} -t %NEXUS_REPO%:${latestTag} .
+                            docker push %NEXUS_REPO%:${latestTag}
                         """
                     }
                 }
