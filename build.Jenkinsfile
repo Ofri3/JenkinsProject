@@ -114,7 +114,7 @@ pipeline {
 
     post {
         always {
-            node {
+            script {
                 // Processes the test results using the JUnit plugin
                 junit 'results.xml'
 
