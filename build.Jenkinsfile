@@ -111,7 +111,6 @@ pipeline {
             }
         }
     }
-
     post {
         always {
             script {
@@ -128,11 +127,9 @@ pipeline {
                         notFailBuild: true)
 
                 // Clean up unused dangling images
-                script {
-                    bat """
-                        docker image prune -f
-                    """
-                }
+                bat """
+                    docker image prune -f
+                """
             }
         }
     }
