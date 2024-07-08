@@ -10,14 +10,20 @@ pipeline {
     }
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        APP_IMAGE_NAME = 'app-image'
+        WEB_IMAGE_NAME = 'web-image'
+        GITCOMMIT = bat(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+        IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GITCOMMIT}"
+        DOCKER_COMPOSE_FILE = 'compose.yaml'
         DOCKER_REPO = 'ofriz/jenkinsproject'
-        SNYK_API_TOKEN = credentials('SNYK_API_TOKEN')
+        NEXUS_REPO = "dockernexus"
         NEXUS_PROTOCOL = "http"
         NEXUS_URL = "172.30.134.43:8085"
-        NEXUS_REPO = "dockernexus"
-        NEXUS_CREDENTIALS_ID = "nexus"
+        NEXUS_CREDENTIALS_ID = credentials('nexus')
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        SNYK_API_TOKEN = credentials('SNYK_API_TOKEN')
     }
+
     stages {
         stage('Checkout') {
             steps {
@@ -25,28 +31,27 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build Docker image using docker-compose
+                    bat """
+                        docker-compose -f ${DOCKER_COMPOSE_FILE} build
+                    """
+                }
+            }
+        }
         stage('Build, tag, and push docker image') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'NEXUS_CREDENTIALS_ID', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     script {
-                        // Extract Git commit hash
-                        bat(script: 'git rev-parse --short HEAD > gitCommit.txt')
-                        def gitCommit = readFile('gitCommit.txt').trim()
-
-                        // Define semver
-                        def semver = "1.0.${BUILD_NUMBER}" // Example semver
-
-                        // Tag with semver, git commit, and latest
-                        def semverTag = "${semver}"
-                        def gitTag = "${gitCommit}"
-                        def latestTag = "latest"
-
-                        // Build, tag, and push images
                         bat """
                             cd polybot
                             docker login -u ${USER} -p ${PASS} ${NEXUS_PROTOCOL}://${NEXUS_URL}/repository/${NEXUS_REPO}
-                            docker tag ${NEXUS_REPO}:${latestTag} ${NEXUS_URL}/${NEXUS_REPO}:${latestTag}
-                            docker push ${NEXUS_URL}/${NEXUS_REPO}:${latestTag}
+                            docker tag ${APP_IMAGE_NAME}:latest ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
+                            docker tag ${WEB_IMAGE_NAME}:latest ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
+                            docker push ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
+                            docker push ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
                         """
                     }
                 }
@@ -59,7 +64,7 @@ pipeline {
                         // Scan the image
                         bat """
                             snyk auth $SNYK_TOKEN
-                            snyk container test %NEXUS_REPO%:latest --severity-threshold=high || exit 0
+                            snyk container test {APP_IMAGE_NAME}:latest --severity-threshold=high || exit 0
                         """
                     }
                 }
@@ -106,6 +111,7 @@ pipeline {
             }
         }
     }
+
     post {
         always {
             // Processes the test results using the JUnit plugin

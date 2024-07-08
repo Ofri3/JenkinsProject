@@ -4,6 +4,7 @@ services:
   app:
     build:
       context: ./polybot
+    image: app-image:latest
     ports:
       - "843:8443"
     volumes:
@@ -12,5 +13,6 @@ services:
   web:
     build:
       context: ./nginx
+    image: web-image:latest
     ports:
       - "844:8444"
