@@ -28,9 +28,10 @@ pipeline {
                 // Checkout code
                 checkout scm
 
-                // Extract Git commit hash
-                GITCOMMIT = bat(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GITCOMMIT}"
+                // Extract Git commit hash and set environment variables
+                def GITCOMMIT = bat(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                def IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GITCOMMIT}"
+                env.GITCOMMIT = GITCOMMIT
                 env.IMAGE_TAG = IMAGE_TAG // Set environment variable
             }
         }
@@ -53,8 +54,8 @@ pipeline {
                             docker login -u ${USER} -p ${PASS} ${NEXUS_PROTOCOL}://${NEXUS_URL}/repository/${NEXUS_REPO}
                             docker tag ${APP_IMAGE_NAME}:latest ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
                             docker tag ${WEB_IMAGE_NAME}:latest ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
-                            docker push ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
-                            docker push ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
+                            docker push ${NEXUS_URL}/${APP_IMAGE_NAME}:${env.IMAGE_TAG}
+                            docker push ${NEXUS_URL}/${WEB_IMAGE_NAME}:${env.IMAGE_TAG}
                         """
                     }
                 }
