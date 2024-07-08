@@ -25,14 +25,16 @@ pipeline {
     stages {
         stage('Checkout and Extract Git Commit Hash') {
             steps {
-                // Checkout code
-                checkout scm
+                script {
+                    // Checkout code
+                    checkout scm
 
-                // Extract Git commit hash and set environment variables
-                def GITCOMMIT = bat(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                def IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GITCOMMIT}"
-                env.GITCOMMIT = GITCOMMIT
-                env.IMAGE_TAG = IMAGE_TAG // Set environment variable
+                    // Extract Git commit hash and set environment variables
+                    def GITCOMMIT = bat(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    def IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GITCOMMIT}"
+                    env.GITCOMMIT = GITCOMMIT
+                    env.IMAGE_TAG = IMAGE_TAG // Set environment variable
+                }
             }
         }
         stage('Build Docker Image') {
