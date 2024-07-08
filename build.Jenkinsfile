@@ -25,16 +25,8 @@ pipeline {
     stages {
         stage('Checkout and Extract Git Commit Hash') {
             steps {
-                script {
-                    // Checkout code
-                    checkout scm
-
-                    // Extract Git commit hash and set environment variables
-                    def GITCOMMIT = bat(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                    def IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GITCOMMIT}"
-                    env.GITCOMMIT = GITCOMMIT
-                    env.IMAGE_TAG = IMAGE_TAG // Set environment variable
-                }
+                // Checkout code
+                checkout scm
             }
         }
         stage('Build Docker Image') {
@@ -51,13 +43,19 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'NEXUS_CREDENTIALS_ID', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     script {
+                        // Extract Git commit hash
+                        bat(script: 'git rev-parse --short HEAD > gitCommit.txt')
+                        def GITCOMMIT = readFile('gitCommit.txt').trim()
+                        def GIT_TAG = "${GITCOMMIT}"
+                        def IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GIT_TAG}"
+
                         bat """
                             cd polybot
                             docker login -u ${USER} -p ${PASS} ${NEXUS_PROTOCOL}://${NEXUS_URL}/repository/${NEXUS_REPO}
                             docker tag ${APP_IMAGE_NAME}:latest ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
                             docker tag ${WEB_IMAGE_NAME}:latest ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
-                            docker push ${NEXUS_URL}/${APP_IMAGE_NAME}:${env.IMAGE_TAG}
-                            docker push ${NEXUS_URL}/${WEB_IMAGE_NAME}:${env.IMAGE_TAG}
+                            docker push ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
+                            docker push ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
                         """
                     }
                 }
