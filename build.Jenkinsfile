@@ -45,7 +45,7 @@ pipeline {
                         bat """
                             cd polybot
                             docker login -u ${USER} -p ${PASS} ${NEXUS_PROTOCOL}://${NEXUS_URL}/repository/${NEXUS_REPO}
-                            docker build -t ${NEXUS_REPO}:${semverTag} -t ${NEXUS_REPO}:${gitTag} -t ${NEXUS_REPO}:${latestTag} .
+                            docker tag ${NEXUS_REPO}:${latestTag} ${NEXUS_URL}/${NEXUS_REPO}:${latestTag}
                             docker push ${NEXUS_URL}/${NEXUS_REPO}:${latestTag}
                         """
                     }
