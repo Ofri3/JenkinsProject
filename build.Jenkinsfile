@@ -19,9 +19,9 @@ pipeline {
         NEXUS_REPO = "dockernexus"
         NEXUS_PROTOCOL = "http"
         NEXUS_URL = "172.30.134.43:8085"
-        NEXUS_CREDENTIALS_ID = credentials('nexus')
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
-        SNYK_API_TOKEN = credentials('SNYK_API_TOKEN')
+        NEXUS_CREDENTIALS_ID = 'NEXUS_CREDENTIALS_ID'
+        DOCKERHUB_CREDENTIALS = 'dockerhub'
+        SNYK_API_TOKEN = 'SNYK_API_TOKEN'
     }
 
     stages {
@@ -114,23 +114,25 @@ pipeline {
 
     post {
         always {
-            // Processes the test results using the JUnit plugin
-            junit 'results.xml'
+            node {
+                // Processes the test results using the JUnit plugin
+                junit 'results.xml'
 
-            // Processes the pylint report using the Warnings Plugin
-            recordIssues enabledForFailure: true, aggregatingResults: true
-            recordIssues tools: [pyLint(pattern: 'pylint.log')]
+                // Processes the pylint report using the Warnings Plugin
+                recordIssues enabledForFailure: true, aggregatingResults: true
+                recordIssues tools: [pyLint(pattern: 'pylint.log')]
 
-            // Clean up workspace after build
-            cleanWs(cleanWhenNotBuilt: false,
-                    deleteDirs: true,
-                    notFailBuild: true)
+                // Clean up workspace after build
+                cleanWs(cleanWhenNotBuilt: false,
+                        deleteDirs: true,
+                        notFailBuild: true)
 
-            // Clean up unused dangling images
-            script {
-                bat """
-                    docker image prune -f
-                """
+                // Clean up unused dangling images
+                script {
+                    bat """
+                        docker image prune -f
+                    """
+                }
             }
         }
     }
