@@ -45,8 +45,8 @@ pipeline {
                         bat """
                             cd polybot
                             docker login -u ${USER} -p ${PASS} ${NEXUS_PROTOCOL}://${NEXUS_URL}/repository/${NEXUS_REPO}
-                            docker build -t %NEXUS_REPO%:${semverTag} -t %NEXUS_REPO%:${gitTag} -t %NEXUS_REPO%:${latestTag} .
-                            docker push %NEXUS_REPO%:${latestTag}
+                            docker build -t ${NEXUS_REPO}:${semverTag} -t ${NEXUS_REPO}:${gitTag} -t ${NEXUS_REPO}:${latestTag} .
+                            docker push ${NEXUS_URL}/${NEXUS_REPO}:${latestTag}
                         """
                     }
                 }
@@ -59,7 +59,7 @@ pipeline {
                         // Scan the image
                         bat """
                             snyk auth $SNYK_TOKEN
-                            snyk container test %DOCKER_REPO%:latest --severity-threshold=high || exit 0
+                            snyk container test %NEXUS_REPO%:latest --severity-threshold=high || exit 0
                         """
                     }
                 }
