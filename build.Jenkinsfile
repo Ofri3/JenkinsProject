@@ -12,8 +12,6 @@ pipeline {
     environment {
         APP_IMAGE_NAME = 'app-image'
         WEB_IMAGE_NAME = 'web-image'
-        GITCOMMIT = bat(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-        IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GITCOMMIT}"
         DOCKER_COMPOSE_FILE = 'compose.yaml'
         DOCKER_REPO = 'ofriz/jenkinsproject'
         NEXUS_REPO = "dockernexus"
@@ -25,10 +23,15 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout and Extract Git Commit Hash') {
             steps {
                 // Checkout code
                 checkout scm
+
+                // Extract Git commit hash
+                GITCOMMIT = bat(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GITCOMMIT}"
+                env.IMAGE_TAG = IMAGE_TAG // Set environment variable
             }
         }
         stage('Build Docker Image') {
@@ -41,7 +44,7 @@ pipeline {
                 }
             }
         }
-        stage('Build, tag, and push docker image') {
+        stage('Login, Tag, and Push Images') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'NEXUS_CREDENTIALS_ID', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     script {
@@ -57,7 +60,7 @@ pipeline {
                 }
             }
         }
-        stage('Security vulnerability scanning') {
+        stage('Security Vulnerability Scanning') {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'SNYK_API_TOKEN', variable: 'SNYK_TOKEN')]) {
@@ -80,7 +83,7 @@ pipeline {
                 }
             }
         }
-        stage('Static code linting and Unittest') {
+        stage('Static Code Linting and Unittest') {
             parallel {
                 stage('Static code linting') {
                     steps {
