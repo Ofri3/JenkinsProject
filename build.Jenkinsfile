@@ -1,3 +1,5 @@
+@Library('shared-lib') _
+
 pipeline {
     agent any
     options {
@@ -10,6 +12,7 @@ pipeline {
     }
 
     environment {
+        // Define environment variables
         APP_IMAGE_NAME = 'app-image'
         WEB_IMAGE_NAME = 'web-image'
         DOCKER_COMPOSE_FILE = 'compose.yaml'
@@ -23,6 +26,12 @@ pipeline {
     }
 
     stages {
+        stage('Use Shared Library Code') {
+            steps {
+                // Use the helloWorld function from the shared library
+                helloWorld('DevOps Student')
+            }
+        }
         stage('Checkout and Extract Git Commit Hash') {
             steps {
                 // Checkout code
@@ -48,7 +57,7 @@ pipeline {
                         def GITCOMMIT = readFile('gitCommit.txt').trim()
                         def GIT_TAG = "${GITCOMMIT}"
                         def IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GIT_TAG}"
-
+                        // Login to Dockerhub / Nexus repo and tag + push the images
                         bat """
                             cd polybot
                             docker login -u ${USER} -p ${PASS} ${NEXUS_PROTOCOL}://${NEXUS_URL}/repository/${NEXUS_REPO}
@@ -77,9 +86,10 @@ pipeline {
         stage('Install Python Requirements') {
             steps {
                 script {
+                // Install Python dependencies
                 bat """
-                pip install --upgrade pip
-                pip install pytest unittest2 pylint flask telebot Pillow loguru matplotlib
+                    pip install --upgrade pip
+                    pip install pytest unittest2 pylint flask telebot Pillow loguru matplotlib
                 """
                 }
             }
@@ -89,9 +99,10 @@ pipeline {
                 stage('Static code linting') {
                     steps {
                         script {
+                            // Run python code analysis
                             bat """
-                            python -m pylint -f parseable --reports=no polybot/*.py > pylint.log
-                            type pylint.log
+                                python -m pylint -f parseable --reports=no polybot/*.py > pylint.log
+                                type pylint.log
                             """
                         }
                     }
@@ -99,6 +110,7 @@ pipeline {
                 stage('Unittest') {
                     steps {
                         script {
+                            // Run unittests
                             bat 'python -m pytest --junitxml results.xml polybot/test'
                         }
                     }
@@ -118,10 +130,10 @@ pipeline {
     post {
         always {
             script {
-                // Processes the test results using the JUnit plugin
+                // Process the test results using the JUnit plugin
                 junit 'results.xml'
 
-                // Processes the pylint report using the Warnings Plugin
+                // Process the pylint report using the Warnings Plugin
                 recordIssues enabledForFailure: true, aggregatingResults: true
                 recordIssues tools: [pyLint(pattern: 'pylint.log')]
 
@@ -130,7 +142,7 @@ pipeline {
                         deleteDirs: true,
                         notFailBuild: true)
 
-                // Clean up unused dangling images
+                // Clean up unused dangling Docker images
                 bat """
                     docker image prune -f
                 """
