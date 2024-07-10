@@ -122,7 +122,7 @@ pipeline {
                 script {
                     // SSH into AWS instance and deploy the application
                     sshagent(['ssh-aws']) {
-                        bat """
+                        sh """
                             ssh -o StrictHostKeyChecking=no ec2-user@$52.58.165.93 << EOF
                             docker pull ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
                             docker pull ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
