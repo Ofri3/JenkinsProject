@@ -97,7 +97,7 @@ pipeline {
         }
         stage('Login, Tag, and Push Images') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'NEXUS_CREDENTIALS_ID', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     script {
                         // Extract Git commit hash
                         bat(script: 'git rev-parse --short HEAD > gitCommit.txt')
@@ -107,11 +107,11 @@ pipeline {
                         // Login to Dockerhub / Nexus repo ,tag, and push images
                         bat """
                             cd polybot
-                            docker login -u ${USER} -p ${PASS}
-                            docker tag ${APP_IMAGE_NAME}:latest ${DOCKER_REPO}:${APP_IMAGE_NAME}-${IMAGE_TAG}
-                            docker tag ${WEB_IMAGE_NAME}:latest ${DOCKER_REPO}:${WEB_IMAGE_NAME}-${IMAGE_TAG}
-                            docker push ${DOCKER_REPO}:${APP_IMAGE_NAME}-${IMAGE_TAG}
-                            docker push ${DOCKER_REPO}:${WEB_IMAGE_NAME}-${IMAGE_TAG}
+                            docker login -u ${USER} -p ${PASS} ${NEXUS_PROTOCOL}://${NEXUS_URL}/repository/${NEXUS_REPO}
+                            docker tag ${APP_IMAGE_NAME}:latest ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
+                            docker tag ${WEB_IMAGE_NAME}:latest ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
+                            docker push ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
+                            docker push ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
                         """
                     }
                 }
