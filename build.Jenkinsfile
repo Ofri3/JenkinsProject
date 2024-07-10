@@ -123,15 +123,16 @@ pipeline {
                 script {
                     withCredentials([sshUserPrivateKey(credentialsId: 'AWS_SSH_CREDENTIALS', keyFileVariable: 'SSH_KEY')]) {
                     // SSH into AWS instance and deploy the application
-                    sshagent(['AWS_SSH_CREDENTIALS']) {
-                        bat """
-                            scp -i %SSH_KEY% -o StrictHostKeyChecking=no ${DOCKER_COMPOSE_FILE} ec2-user@${AWS_ELASTIC_IP}:/home/app-deploy/
-                            ssh -i %SSH_KEY% -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP}
-                            docker pull ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
-                            docker pull ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
-                            docker-compose -f ${DOCKER_COMPOSE_FILE} down
-                            docker-compose -f ${DOCKER_COMPOSE_FILE} up -d
-                        """
+                        sshagent(['AWS_SSH_CREDENTIALS']) {
+                            bat """
+                                scp -i %SSH_KEY% -o StrictHostKeyChecking=no ${DOCKER_COMPOSE_FILE} ec2-user@${AWS_ELASTIC_IP}:/home/app-deploy/
+                                ssh -i %SSH_KEY% -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP}
+                                docker pull ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
+                                docker pull ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
+                                docker-compose -f ${DOCKER_COMPOSE_FILE} down
+                                docker-compose -f ${DOCKER_COMPOSE_FILE} up -d
+                            """
+                        }
                     }
                 }
             }
