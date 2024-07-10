@@ -20,6 +20,7 @@ pipeline {
         NEXUS_REPO = "dockernexus"
         NEXUS_PROTOCOL = "http"
         NEXUS_URL = "172.30.134.43:8085"
+        AWS_ELASTIC_IP = '52.58.165.93'
         NEXUS_CREDENTIALS_ID = 'NEXUS_CREDENTIALS_ID'
         DOCKERHUB_CREDENTIALS = 'dockerhub'
         SNYK_API_TOKEN = 'SNYK_API_TOKEN'
@@ -122,13 +123,12 @@ pipeline {
                 script {
                     // SSH into AWS instance and deploy the application
                     sshagent(['ssh-aws']) {
-                        sh """
-                            ssh -o StrictHostKeyChecking=no ec2-user@$52.58.165.93 << EOF
+                        bat """
+                            ssh -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP}
                             docker pull ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
                             docker pull ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
                             docker-compose -f ${DOCKER_COMPOSE_FILE} down
                             docker-compose -f ${DOCKER_COMPOSE_FILE} up -d
-                            EOF
                         """
                     }
                 }
