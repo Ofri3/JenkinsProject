@@ -130,10 +130,7 @@ pipeline {
         }
         stage('Deployment on EC2') {
             steps {
-                withCredentials([
-                    usernamePassword(credentialsId: 'NEXUS_CREDENTIALS_ID', usernameVariable: 'USER', passwordVariable: 'PASS'),
-                    usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USER', passwordVariable: 'PASS')
-                ]) {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     script {
                         // Login to Dockerhub private repo
                         bat """
