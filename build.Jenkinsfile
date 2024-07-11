@@ -130,12 +130,11 @@ pipeline {
 
                     // SSH into EC2 instance and run Docker commands
                     bat """
-                        ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} << 'EOF'
+                        ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP}
                             docker pull ${NEXUS_URL}/${APP_IMAGE_NAME}:${env.IMAGE_TAG}
                             docker pull ${NEXUS_URL}/${WEB_IMAGE_NAME}:${env.IMAGE_TAG}
                             docker-compose -f /home/ec2-user/${DOCKER_COMPOSE_FILE} down
                             docker-compose -f /home/ec2-user/${DOCKER_COMPOSE_FILE} up -d
-                        EOF
                     """
                 }
             }
