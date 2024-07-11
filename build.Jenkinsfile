@@ -106,7 +106,7 @@ pipeline {
                         def GITCOMMIT = readFile('gitCommit.txt').trim()
                         def GIT_TAG = "${GITCOMMIT}"
                         // Set IMAGE_TAG as an environment variable
-                        def env.IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GIT_TAG}"
+                        env.IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GIT_TAG}"
                         // Login to Dockerhub / Nexus repo ,tag, and push images
                         bat """
                             cd polybot
