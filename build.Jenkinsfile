@@ -21,6 +21,7 @@ pipeline {
         NEXUS_PROTOCOL = "http"
         NEXUS_URL = "172.30.134.43:8085"
         AWS_ELASTIC_IP = '52.58.165.93'
+        SSH_KEY_PATH = 'C:\aws-open'
         NEXUS_CREDENTIALS_ID = 'NEXUS_CREDENTIALS_ID'
         DOCKERHUB_CREDENTIALS = 'dockerhub'
         SNYK_API_TOKEN = 'SNYK_API_TOKEN'
@@ -121,19 +122,20 @@ pipeline {
         stage('Deployment to EC2') {
             steps {
                 script {
-                    withCredentials([sshUserPrivateKey(credentialsId: 'AWS_SSH_CREDENTIALS', keyFileVariable: 'SSH_KEY')]) {
-                    // SSH into AWS instance and deploy the application
-                        sshagent(['AWS_SSH_CREDENTIALS']) {
-                            bat """
-                                scp -i %SSH_KEY% -o StrictHostKeyChecking=no ${DOCKER_COMPOSE_FILE} ec2-user@${AWS_ELASTIC_IP}:/home/app-deploy/
-                                ssh -i %SSH_KEY% -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP}
-                                docker pull ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
-                                docker pull ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
-                                docker-compose -f ${DOCKER_COMPOSE_FILE} down
-                                docker-compose -f ${DOCKER_COMPOSE_FILE} up -d
-                            """
-                        }
-                    }
+                    // Transfer compose.yaml file to EC2 instance
+                    bat """
+                        scp -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ${DOCKER_COMPOSE_FILE} ec2-user@${AWS_ELASTIC_IP}:/app/
+                    """
+
+                    // SSH into EC2 instance and run Docker commands
+                    bat """
+                        ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} << 'EOF'
+                            docker pull ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
+                            docker pull ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
+                            docker-compose -f /app/${DOCKER_COMPOSE_FILE} down
+                            docker-compose -f /app/${DOCKER_COMPOSE_FILE} up -d
+                        EOF
+                    """
                 }
             }
         }
