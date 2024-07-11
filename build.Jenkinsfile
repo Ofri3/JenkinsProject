@@ -124,7 +124,7 @@ pipeline {
                 script {
                     // Transfer compose.yaml file to EC2 instance
                     bat """
-                        scp -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ${DOCKER_COMPOSE_FILE} ec2-user@${AWS_ELASTIC_IP}:/app/
+                        scp -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ${DOCKER_COMPOSE_FILE} ec2-user@${AWS_ELASTIC_IP}:/home/ec2-user/
                     """
 
                     // SSH into EC2 instance and run Docker commands
@@ -132,8 +132,8 @@ pipeline {
                         ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} << 'EOF'
                             docker pull ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
                             docker pull ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
-                            docker-compose -f /app/${DOCKER_COMPOSE_FILE} down
-                            docker-compose -f /app/${DOCKER_COMPOSE_FILE} up -d
+                            docker-compose -f /home/ec2-user/${DOCKER_COMPOSE_FILE} down
+                            docker-compose -f /home/ec2-user/${DOCKER_COMPOSE_FILE} up -d
                         EOF
                     """
                 }
