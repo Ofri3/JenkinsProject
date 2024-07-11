@@ -101,19 +101,20 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'NEXUS_CREDENTIALS_ID', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     script {
-                        // Extract Git commit hash
+                        // Retrieve the Git commit hash
                         bat(script: 'git rev-parse --short HEAD > gitCommit.txt')
                         def GITCOMMIT = readFile('gitCommit.txt').trim()
                         def GIT_TAG = "${GITCOMMIT}"
-                        def IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GIT_TAG}"
+                        // Set IMAGE_TAG as an environment variable
+                        def env.IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GIT_TAG}"
                         // Login to Dockerhub / Nexus repo ,tag, and push images
                         bat """
                             cd polybot
                             docker login -u ${USER} -p ${PASS} ${NEXUS_PROTOCOL}://${NEXUS_URL}/repository/${NEXUS_REPO}
-                            docker tag ${APP_IMAGE_NAME}:latest ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
-                            docker tag ${WEB_IMAGE_NAME}:latest ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
-                            docker push ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
-                            docker push ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
+                            docker tag ${APP_IMAGE_NAME}:latest ${NEXUS_URL}/${APP_IMAGE_NAME}:${env.IMAGE_TAG}
+                            docker tag ${WEB_IMAGE_NAME}:latest ${NEXUS_URL}/${WEB_IMAGE_NAME}:${env.IMAGE_TAG}
+                            docker push ${NEXUS_URL}/${APP_IMAGE_NAME}:${env.IMAGE_TAG}
+                            docker push ${NEXUS_URL}/${WEB_IMAGE_NAME}:${env.IMAGE_TAG}
                         """
                     }
                 }
@@ -130,8 +131,8 @@ pipeline {
                     // SSH into EC2 instance and run Docker commands
                     bat """
                         ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} << 'EOF'
-                            docker pull ${NEXUS_URL}/${APP_IMAGE_NAME}:${IMAGE_TAG}
-                            docker pull ${NEXUS_URL}/${WEB_IMAGE_NAME}:${IMAGE_TAG}
+                            docker pull ${NEXUS_URL}/${APP_IMAGE_NAME}:${env.IMAGE_TAG}
+                            docker pull ${NEXUS_URL}/${WEB_IMAGE_NAME}:${env.IMAGE_TAG}
                             docker-compose -f /home/ec2-user/${DOCKER_COMPOSE_FILE} down
                             docker-compose -f /home/ec2-user/${DOCKER_COMPOSE_FILE} up -d
                         EOF
