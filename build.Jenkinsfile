@@ -99,7 +99,10 @@ pipeline {
         }
         stage('Login, Tag, and Push Images') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'NEXUS_CREDENTIALS_ID', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                withCredentials([
+                    usernamePassword(credentialsId: 'NEXUS_CREDENTIALS_ID', usernameVariable: 'USER', passwordVariable: 'PASS'),
+                    usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USER', passwordVariable: 'PASS')
+                ]) {
                     script {
                         // Retrieve the Git commit hash
                         bat(script: 'git rev-parse --short HEAD > gitCommit.txt')
@@ -111,40 +114,52 @@ pipeline {
                         bat """
                             cd polybot
                             docker login -u ${USER} -p ${PASS} ${NEXUS_PROTOCOL}://${NEXUS_URL}/repository/${NEXUS_REPO}
+                            docker login -u ${USER} -p ${PASS}
                             docker tag ${APP_IMAGE_NAME}:latest ${NEXUS_URL}/${APP_IMAGE_NAME}:${env.IMAGE_TAG}
                             docker tag ${WEB_IMAGE_NAME}:latest ${NEXUS_URL}/${WEB_IMAGE_NAME}:${env.IMAGE_TAG}
+                            docker tag ${APP_IMAGE_NAME}:latest ${DOCKER_REPO}:${APP_IMAGE_NAME}-${env.IMAGE_TAG}
+                            docker tag ${WEB_IMAGE_NAME}:latest ${DOCKER_REPO}:${WEB_IMAGE_NAME}-${env.IMAGE_TAG}
                             docker push ${NEXUS_URL}/${APP_IMAGE_NAME}:${env.IMAGE_TAG}
                             docker push ${NEXUS_URL}/${WEB_IMAGE_NAME}:${env.IMAGE_TAG}
+                            docker push ${DOCKER_REPO}:${APP_IMAGE_NAME}-${env.IMAGE_TAG}
+                            docker push ${DOCKER_REPO}:${WEB_IMAGE_NAME}-${env.IMAGE_TAG}
                         """
                     }
                 }
             }
         }
-        stage('Deployment to EC2') {
+        stage('Deployment on EC2') {
             steps {
-                script {
-                    // Transfer compose.yaml file to EC2 instance
-                    bat """
-                        scp -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ${DOCKER_COMPOSE_FILE} ec2-user@${AWS_ELASTIC_IP}:/home/ec2-user/
-                    """
+                withCredentials([
+                    usernamePassword(credentialsId: 'NEXUS_CREDENTIALS_ID', usernameVariable: 'USER', passwordVariable: 'PASS'),
+                    usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USER', passwordVariable: 'PASS')
+                ]) {
+                    script {
+                        // Login to Dockerhub private repo
+                        bat """
+                            ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} "docker login -u ${USER} -p ${PASS}"
+                        """
 
-                    // Pull images on EC2
-                    bat """
-                        ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} "docker pull ${NEXUS_URL}/${APP_IMAGE_NAME}:${env.IMAGE_TAG}"
-                    """
-                    bat """
-                        ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} "docker pull ${NEXUS_URL}/${WEB_IMAGE_NAME}:${env.IMAGE_TAG}"
-                    """
+                        // Pull the app image from Dockerhub
+                        bat """
+                            ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} "docker pull ${DOCKER_REPO}:${APP_IMAGE_NAME}-${env.IMAGE_TAG}"
+                        """
 
-                    // Bring down the current Docker Compose stack
-                    bat """
-                        ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} "docker-compose -f /home/ec2-user/${DOCKER_COMPOSE_FILE} down"
-                    """
+                        // Pull the web image from Dockerhub
+                        bat """
+                            ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} "docker pull ${DOCKER_REPO}:${WEB_IMAGE_NAME}-${env.IMAGE_TAG}"
+                        """
 
-                    // Bring up the new Docker Compose stack
-                    bat """
-                        ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} "docker-compose -f /home/ec2-user/${DOCKER_COMPOSE_FILE} up -d"
-                    """
+                        // Run the app image at 8443
+                        bat """
+                            ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} "docker run -d -p 843:8443 --name my-app-container ${DOCKER_REPO}:${APP_IMAGE_NAME}-${env.IMAGE_TAG}"
+                        """
+
+                        // Run the web image at 8444
+                        bat """
+                            ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} "docker run -d -p 844:8444 --name my-web-container ${DOCKER_REPO}:${WEB_IMAGE_NAME}-${env.IMAGE_TAG}"
+                        """
+                    }
                 }
             }
         }
