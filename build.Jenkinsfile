@@ -21,7 +21,7 @@ pipeline {
         NEXUS_PROTOCOL = "http"
         NEXUS_URL = "172.30.134.43:8085"
         AWS_ELASTIC_IP = '52.58.165.93'
-        SSH_KEY_PATH = 'C:/aws-open'
+        SSH_KEY_PATH = 'C:/Users/Ofri/Downloads/aws-open.pem'
         NEXUS_CREDENTIALS_ID = 'NEXUS_CREDENTIALS_ID'
         DOCKERHUB_CREDENTIALS = 'dockerhub'
         SNYK_API_TOKEN = 'SNYK_API_TOKEN'
