@@ -4,9 +4,11 @@ from bot import QuoteBot, ImageProcessingBot
 
 app = Flask(__name__)
 
-TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
 TELEGRAM_APP_URL = 'https://t.me/@Smileythebot'
+TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN')
 
+if not TELEGRAM_TOKEN:
+    raise ValueError("No TELEGRAM_TOKEN provided")
 
 @app.route('/', methods=['GET'])
 def index():

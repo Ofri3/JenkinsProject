@@ -13,6 +13,7 @@ pipeline {
 
     environment {
         // Define environment variables
+        TELEGRAM_TOKEN = credentials('TELEGRAM_TOKEN')
         APP_IMAGE_NAME = 'app-image'
         WEB_IMAGE_NAME = 'web-image'
         DOCKER_COMPOSE_FILE = 'compose.yaml'
@@ -159,7 +160,7 @@ pipeline {
 
                         // Run the app image at 8443
                         bat """
-                            ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} "docker run -d -p 843:8443 --name my-app-container ${DOCKER_REPO}:${APP_IMAGE_NAME}-${env.IMAGE_TAG}"
+                            ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} "docker run -d -p 843:8443 --name my-app-container ${DOCKER_REPO}:${APP_IMAGE_NAME}-${env.IMAGE_TAG} \ -e TELEGRAM_TOKEN=${TELEGRAM_TOKEN} \ ${DOCKER_REPO}:${APP_IMAGE_NAME}-${env.IMAGE_TAG}"
                         """
 
                         // Run the web image at 8444
