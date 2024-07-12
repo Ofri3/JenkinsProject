@@ -160,7 +160,7 @@ pipeline {
 
                         // Run the app image at 8443
                         bat """
-                            ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} "docker run -d -p 8443:8443 --name my-app-container -e TELEGRAM_TOKEN=${TELEGRAM_TOKEN} ${DOCKER_REPO}:${APP_IMAGE_NAME}-${env.IMAGE_TAG}"
+                            ssh -i ${SSH_KEY_PATH} -o StrictHostKeyChecking=no ec2-user@${AWS_ELASTIC_IP} "docker run -d -p 843:8443 --name my-app-container -e TELEGRAM_TOKEN=${TELEGRAM_TOKEN} ${DOCKER_REPO}:${APP_IMAGE_NAME}-${env.IMAGE_TAG}"
                         """
 
                         // Run the web image at 8444
