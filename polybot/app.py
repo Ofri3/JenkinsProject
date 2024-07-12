@@ -1,9 +1,10 @@
+import os
 from flask import Flask, request
 from bot import QuoteBot, ImageProcessingBot
 
 app = Flask(__name__)
 
-TELEGRAM_TOKEN = ''
+TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
 TELEGRAM_APP_URL = 'https://t.me/@Smileythebot'
 
 
