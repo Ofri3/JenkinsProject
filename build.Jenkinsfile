@@ -56,7 +56,7 @@ pipeline {
                 // Install Python dependencies
                 bat """
                     pip install --upgrade pip
-                    pip install pytest unittest2 pylint flask telebot Pillow loguru matplotlib os
+                    pip install pytest unittest2 pylint flask telebot Pillow loguru matplotlib
                 """
                 }
             }
