@@ -39,6 +39,16 @@ pipeline {
             steps {
                 // Checkout code
                 checkout scm
+
+                // Extract Git commit hash
+                script {
+                    bat(script: 'git rev-parse --short HEAD > gitCommit.txt')
+                    def GITCOMMIT = readFile('gitCommit.txt').trim()
+                    env.GIT_TAG = "${GITCOMMIT}"
+
+                    // Set IMAGE_TAG as an environment variable
+                    env.IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GIT_TAG}"
+                }
             }
         }
         stage('Build Docker Image') {
@@ -54,11 +64,11 @@ pipeline {
         stage('Install Python Requirements') {
             steps {
                 script {
-                // Install Python dependencies
-                bat """
-                    pip install --upgrade pip
-                    pip install pytest unittest2 pylint flask telebot Pillow loguru matplotlib
-                """
+                    // Install Python dependencies
+                    bat """
+                        pip install --upgrade pip
+                        pip install pytest unittest2 pylint flask telebot Pillow loguru matplotlib
+                    """
                 }
             }
         }
@@ -100,31 +110,26 @@ pipeline {
         }
         stage('Login, Tag, and Push Images') {
             steps {
-                withCredentials([
-                    usernamePassword(credentialsId: 'NEXUS_CREDENTIALS_ID', usernameVariable: 'USER', passwordVariable: 'PASS'),
-                    usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USER', passwordVariable: 'PASS')
-                ]) {
-                    script {
-                        // Retrieve the Git commit hash
-                        bat(script: 'git rev-parse --short HEAD > gitCommit.txt')
-                        def GITCOMMIT = readFile('gitCommit.txt').trim()
-                        def GIT_TAG = "${GITCOMMIT}"
-                        // Set IMAGE_TAG as an environment variable
-                        env.IMAGE_TAG = "v1.0.0-${BUILD_NUMBER}-${GIT_TAG}"
-                        // Login to Dockerhub / Nexus repo ,tag, and push images
-                        bat """
-                            cd polybot
-                            docker login -u ${USER} -p ${PASS} ${NEXUS_PROTOCOL}://${NEXUS_URL}/repository/${NEXUS_REPO}
-                            docker login -u ${USER} -p ${PASS}
-                            docker tag ${APP_IMAGE_NAME}:latest ${NEXUS_URL}/${APP_IMAGE_NAME}:${env.IMAGE_TAG}
-                            docker tag ${WEB_IMAGE_NAME}:latest ${NEXUS_URL}/${WEB_IMAGE_NAME}:${env.IMAGE_TAG}
-                            docker tag ${APP_IMAGE_NAME}:latest ${DOCKER_REPO}:${APP_IMAGE_NAME}-${env.IMAGE_TAG}
-                            docker tag ${WEB_IMAGE_NAME}:latest ${DOCKER_REPO}:${WEB_IMAGE_NAME}-${env.IMAGE_TAG}
-                            docker push ${NEXUS_URL}/${APP_IMAGE_NAME}:${env.IMAGE_TAG}
-                            docker push ${NEXUS_URL}/${WEB_IMAGE_NAME}:${env.IMAGE_TAG}
-                            docker push ${DOCKER_REPO}:${APP_IMAGE_NAME}-${env.IMAGE_TAG}
-                            docker push ${DOCKER_REPO}:${WEB_IMAGE_NAME}-${env.IMAGE_TAG}
-                        """
+                script {
+                    withCredentials([
+                        usernamePassword(credentialsId: 'NEXUS_CREDENTIALS_ID', usernameVariable: 'USER', passwordVariable: 'PASS'),
+                        usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USER', passwordVariable: 'PASS')
+                    ]) {
+
+                    // Login to Dockerhub / Nexus repo ,tag, and push images
+                    bat """
+                        cd polybot
+                        docker login -u ${USER} -p ${PASS} ${NEXUS_PROTOCOL}://${NEXUS_URL}/repository/${NEXUS_REPO}
+                        docker login -u ${USER} -p ${PASS}
+                        docker tag ${APP_IMAGE_NAME}:latest ${NEXUS_URL}/${APP_IMAGE_NAME}:${env.IMAGE_TAG}
+                        docker tag ${WEB_IMAGE_NAME}:latest ${NEXUS_URL}/${WEB_IMAGE_NAME}:${env.IMAGE_TAG}
+                        docker tag ${APP_IMAGE_NAME}:latest ${DOCKER_REPO}:${APP_IMAGE_NAME}-${env.IMAGE_TAG}
+                        docker tag ${WEB_IMAGE_NAME}:latest ${DOCKER_REPO}:${WEB_IMAGE_NAME}-${env.IMAGE_TAG}
+                        docker push ${NEXUS_URL}/${APP_IMAGE_NAME}:${env.IMAGE_TAG}
+                        docker push ${NEXUS_URL}/${WEB_IMAGE_NAME}:${env.IMAGE_TAG}
+                        docker push ${DOCKER_REPO}:${APP_IMAGE_NAME}-${env.IMAGE_TAG}
+                        docker push ${DOCKER_REPO}:${WEB_IMAGE_NAME}-${env.IMAGE_TAG}
+                    """
                     }
                 }
             }
@@ -174,6 +179,14 @@ pipeline {
     }
     post {
         always {
+            // Clean up workspace after build
+            cleanWs(cleanWhenNotBuilt: false,
+                    deleteDirs: true,
+                    notFailBuild: true,
+                    patterns: [
+                    [pattern: 'results.xml', type: 'EXCLUDE']
+            ])
+
             script {
                 // Process the test results using the JUnit plugin
                 junit 'results.xml'
@@ -181,11 +194,6 @@ pipeline {
                 // Process the pylint report using the Warnings Plugin
                 recordIssues enabledForFailure: true, aggregatingResults: true
                 recordIssues tools: [pyLint(pattern: 'pylint.log')]
-
-                // Clean up workspace after build
-                cleanWs(cleanWhenNotBuilt: false,
-                        deleteDirs: true,
-                        notFailBuild: true)
 
                 // Clean up unused dangling Docker images
                 bat """
