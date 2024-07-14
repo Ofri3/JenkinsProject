@@ -180,7 +180,7 @@ pipeline {
     post {
         always {
             script {
-                // Process the test results using the JUnit plugin
+                // Process the test results using the JUnit plugin.
                 junit 'results.xml'
 
                 // Process the pylint report using the Warnings Plugin
