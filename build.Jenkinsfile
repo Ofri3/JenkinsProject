@@ -179,14 +179,6 @@ pipeline {
     }
     post {
         always {
-            // Clean up workspace after build
-            cleanWs(cleanWhenNotBuilt: false,
-                    deleteDirs: true,
-                    notFailBuild: true,
-                    patterns: [
-                    [pattern: 'results.xml', type: 'EXCLUDE']
-            ])
-
             script {
                 // Process the test results using the JUnit plugin
                 junit 'results.xml'
@@ -194,6 +186,14 @@ pipeline {
                 // Process the pylint report using the Warnings Plugin
                 recordIssues enabledForFailure: true, aggregatingResults: true
                 recordIssues tools: [pyLint(pattern: 'pylint.log')]
+
+                // Clean up workspace after build
+                cleanWs(cleanWhenNotBuilt: false,
+                        deleteDirs: true,
+                        notFailBuild: true,
+                        patterns: [
+                        [pattern: 'results.xml', type: 'EXCLUDE']
+                ])
 
                 // Clean up unused dangling Docker images
                 bat """

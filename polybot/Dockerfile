@@ -6,4 +6,4 @@ COPY . .
 ENV FLASK_APP=app.py
 EXPOSE 8443
 
-CMD ["flask", "run"]
+CMD ["flask", "run", "--host=0.0.0.0", "--port=8443"]
